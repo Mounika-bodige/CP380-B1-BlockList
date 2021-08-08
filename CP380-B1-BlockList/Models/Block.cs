@@ -46,7 +46,12 @@ namespace CP380_B1_BlockList.Models
 
         public void Mine(int difficulty)
         {
-            // TODO
+            var diffval = new string('CC', difficulty);
+            while (this.Hash == null || this.Hash.Substring(0, difficulty) != diffval)
+            {
+                this.Nonce++;
+                this.Hash = this.CalculateHash();
+            }
         }
     }
 }
