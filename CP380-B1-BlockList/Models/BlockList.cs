@@ -1,59 +1,64 @@
-﻿using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Reflection;
+using System.IO;
 
-namespace CP380_B1_BlockList.Models
+namespace CP380_B2_BlockWebAPI
 {
-    public class BlockList
+    public class Startup
     {
-        public IList<Block> Chain { get; set; }
-
-        public int Difficulty { get; set; } = 2;
-
-        public BlockList()
+        public Startup(IConfiguration configuration)
         {
-            Chain = new List<Block>();
-            MakeFirstBlock();
+            Configuration = configuration;
         }
 
-        public void MakeFirstBlock()
-        {
-            var block = new Block(DateTime.Now, null, new List<Payload>());
-            block.Mine(Difficulty);
-            Chain.Add(block);
-        }
+        public IConfiguration Configuration { get; }
 
-       public void AddBlock(Block b)
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
         {
-            Block va = GetBlock();
-            b.Nonce = va.Nonce + 1;
-            b.PreviousHash = va.Hash;
-            b.Mine(this.Difficulty);
-            Chain.Add(b);
-        }
-
-        public Block GetBlock()
-        {
-            return Chain[Chain.Count - 1];
-        }
-
-        public bool IsValid()
-        {
-            for (int i = 1; i < Chain.Count; i++)
+            //
+            // TODO:
+            //  add singletons
+            //  
+            services.AddControllers();
+            services.AddSwaggerGen(c =>
             {
-                Block current = Chain[i];
-                Block pr = Chain[i - 1];
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "CP380_B2_BlockWebAPI", Version = "v1" });
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+            });
+        }
 
-                if (current.Hash != current.CalculateHash())
-                {
-                    return false;
-                }
-
-                if (current.PreviousHash != pr.Hash)
-                {
-                    return false;
-                }
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
             }
-            return true;
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CP380_B2_BlockWebAPI v1"));
+
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }
