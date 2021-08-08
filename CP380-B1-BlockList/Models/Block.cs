@@ -1,20 +1,23 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Microsoft.IdentityModel.Tokens;
 
 namespace CP380_B1_BlockList.Models
 {
     public class Block
     {
-        public int Nonce { get; set; }
+        public int Nonce { get; set; } = 0;
         public DateTime TimeStamp { get; set; }
         public string PreviousHash { get; set; }
         public string Hash { get; set; }
         public List<Payload> Data { get; set; }
 
+        public Block()
+        {
+
+        }
         public Block(DateTime timeStamp, string previousHash, List<Payload> data)
         {
             Nonce = 0;
@@ -30,24 +33,24 @@ namespace CP380_B1_BlockList.Models
         //
         public string CalculateHash()
         {
-            var sha256 = SHA256.Create();
+            SHA256 sha256 = SHA256.Create();
             var json = JsonSerializer.Serialize(Data);
 
             //
             // TODO
             //
-            var inputString = $""; // TODO
 
-            var inputBytes = Encoding.ASCII.GetBytes(inputString);
-            var outputBytes = sha256.ComputeHash(inputBytes);
 
-            return Base64UrlEncoder.Encode(outputBytes);
+            var input = Encoding.ASCII.GetBytes($"{TimeStamp}-{PreviousHash ?? ""}-{Data}-{Nonce}");
+            var output = sha256.ComputeHash(input);
+
+            return Convert.ToBase64String(output);
         }
 
         public void Mine(int difficulty)
         {
-            var diffval = new string('CC', difficulty);
-            while (this.Hash == null || this.Hash.Substring(0, difficulty) != diffval)
+            var c = new string('C', difficulty);
+            while (this.Hash == null || this.Hash.Substring(0, difficulty) != c)
             {
                 this.Nonce++;
                 this.Hash = this.CalculateHash();
